@@ -65,10 +65,6 @@ function SwipeRestaurant() {
     ];
 
     const handleSwipe = (direction: 'left' | 'right') => {
-        // if (direction === 'right' && currentIndex < restaurantsData.length) {
-        //     setLikedRestaurants([...likedRestaurants, restaurantsData[currentIndex]]);
-        // }
-
         setTimeout(() => {
             if (currentIndex < restaurantsData.length - 1) {
                 setCurrentIndex(currentIndex + 1);
@@ -86,7 +82,6 @@ function SwipeRestaurant() {
             <RestaurantFilters />
 
             <main className="py-8 flex justify-center items-start px-4 pb-8">
-                {/* <RestaurantCard restaurant={currentRestaurant} /> */}
                 {currentRestaurant ?
                     (
                         <RestaurantCard key={currentRestaurant.id} restaurant={currentRestaurant} onSwipe={handleSwipe} />
