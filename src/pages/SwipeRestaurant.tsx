@@ -1,8 +1,10 @@
+import { useState } from "react";
 import RestaurantCard from "../components/RestaurantCard";
 import RestaurantFilters from "../components/RestaurantFilters";
 import type { Restaurant } from "../models/interfaces/Restaurant";
 
 function SwipeRestaurant() {
+    const [currentIndex, setCurrentIndex] = useState(0);
 
     const restaurantsData: Restaurant[] = [
         {
@@ -62,15 +64,39 @@ function SwipeRestaurant() {
         },
     ];
 
+    const handleSwipe = (direction: 'left' | 'right') => {
+        // if (direction === 'right' && currentIndex < restaurantsData.length) {
+        //     setLikedRestaurants([...likedRestaurants, restaurantsData[currentIndex]]);
+        // }
+
+        setTimeout(() => {
+            if (currentIndex < restaurantsData.length - 1) {
+                setCurrentIndex(currentIndex + 1);
+            } else {
+                // Reiniciar cuando se acaben los restaurantes
+                setCurrentIndex(0);
+            }
+        }, 300);
+    };
+
+    const currentRestaurant = restaurantsData[currentIndex];
 
     return (
         <>
             <RestaurantFilters />
 
             <main className="py-8 flex justify-center items-start px-4 pb-8">
-                <RestaurantCard
-                    restaurant={restaurantsData[0]}
-                />
+                {/* <RestaurantCard restaurant={currentRestaurant} /> */}
+                {currentRestaurant ?
+                    (
+                        <RestaurantCard key={currentRestaurant.id} restaurant={currentRestaurant} onSwipe={handleSwipe} />
+                    ) :
+                    (
+                        <div className="text-center py-16">
+                            <p className="text-gray-600">No hay más restaurantes disponibles</p>
+                        </div>
+                    )
+                }
             </main>
         </>
     )
