@@ -1,74 +1,74 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import RestaurantCard from "../components/RestaurantCard";
 import RestaurantFilters from "../components/RestaurantFilters";
 import type { Restaurant } from "../models/interfaces/Restaurant";
+import { searchRestaurants } from "../services/placesService";
 
 function SwipeRestaurant() {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [restaurantsData, setRestaurantsData] = useState<Restaurant[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const restaurantsData: Restaurant[] = [
-        {
-            id: 1,
-            name: 'La Trattoria',
-            cuisine: 'Italiana',
-            rating: 4.7,
-            distance: '1.2 km',
-            priceRange: '€€€',
-            openUntil: '23:00',
-            image: 'https://images.unsplash.com/photo-1680405229153-a753d043c4ec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpdGFsaWFuJTIwcmVzdGF1cmFudCUyMHBhc3RhfGVufDF8fHx8MTc2NDg5NzY1N3ww&ixlib=rb-4.1.0&q=80&w=1080',
-            description: 'Auténtica cocina italiana con pasta casera',
-        },
-        {
-            id: 2,
-            name: 'Sakura Sushi',
-            cuisine: 'Asiática',
-            rating: 4.9,
-            distance: '0.8 km',
-            priceRange: '€€€€',
-            openUntil: '22:30',
-            image: 'https://images.unsplash.com/photo-1621871908119-295c8ce5cee4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhc2lhbiUyMHJlc3RhdXJhbnQlMjBzdXNoaXxlbnwxfHx8fDE3NjQ5MjE2MjJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
-            description: 'Sushi fresco y cocina japonesa tradicional',
-        },
-        {
-            id: 3,
-            name: 'El Mariachi',
-            cuisine: 'Mexicana',
-            rating: 4.5,
-            distance: '2.1 km',
-            priceRange: '€€',
-            openUntil: '00:00',
-            image: 'https://images.unsplash.com/photo-1665541719551-655b587161e4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZXhpY2FuJTIwcmVzdGF1cmFudCUyMHRhY29zfGVufDF8fHx8MTc2NDg0NTEyMHww&ixlib=rb-4.1.0&q=80&w=1080',
-            description: 'Tacos auténticos y margaritas deliciosas',
-        },
-        {
-            id: 4,
-            name: 'Le Bistrot',
-            cuisine: 'Mediterránea',
-            rating: 4.6,
-            distance: '1.5 km',
-            priceRange: '€€€',
-            openUntil: '23:30',
-            image: 'https://images.unsplash.com/photo-1685040235380-a42a129ade4e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjByZXN0YXVyYW50JTIwZm9vZHxlbnwxfHx8fDE3NjQ5MjE2MjJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
-            description: 'Cocina mediterránea moderna y elegante',
-        },
-        {
-            id: 5,
-            name: 'Casa del Mar',
-            cuisine: 'Mediterránea',
-            rating: 4.8,
-            distance: '3.2 km',
-            priceRange: '€€€€',
-            openUntil: '22:00',
-            image: 'https://images.unsplash.com/photo-1657593088889-5105c637f2a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyZXN0YXVyYW50JTIwaW50ZXJpb3IlMjBkaW5pbmd8ZW58MXx8fHwxNzY0ODYwNjA1fDA&ixlib=rb-4.1.0&q=80&w=1080',
-            description: 'Mariscos frescos con vistas al mar',
-        },
-    ];
+    // Default location: Madrid, Spain
+    const defaultLatitude = 40.4168;
+    const defaultLongitude = -3.7038;
 
-    const handleSwipe = (direction: 'left' | 'right') => {
+    useEffect(() => {
+        const loadRestaurants = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                // Get user's geolocation or use default
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            const { latitude, longitude } = position.coords;
+                            const data = await searchRestaurants(latitude, longitude);
+                            if (data.length === 0) {
+                                setError('No restaurants found in your area');
+                            } else {
+                                setRestaurantsData(data);
+                            }
+                            setLoading(false);
+                        },
+                        async () => {
+                            // Fallback to default location if geolocation fails
+                            const data = await searchRestaurants(defaultLatitude, defaultLongitude);
+                            if (data.length === 0) {
+                                setError('Failed to load restaurants');
+                            } else {
+                                setRestaurantsData(data);
+                            }
+                            setLoading(false);
+                        }
+                    );
+                } else {
+                    // Geolocation not supported, use default
+                    const data = await searchRestaurants(defaultLatitude, defaultLongitude);
+                    if (data.length === 0) {
+                        setError('Failed to load restaurants');
+                    } else {
+                        setRestaurantsData(data);
+                    }
+                    setLoading(false);
+                }
+            } catch (err) {
+                setError('An error occurred while loading restaurants');
+                console.error(err);
+                setLoading(false);
+            }
+        };
+
+        loadRestaurants();
+    }, []);
+
+    const handleSwipe = () => {
         setTimeout(() => {
-            if (currentIndex < restaurantsData.length - 1) {
+            if (restaurantsData.length > 0 && currentIndex < restaurantsData.length - 1) {
                 setCurrentIndex(currentIndex + 1);
-            } else {
+            } else if (restaurantsData.length > 0) {
                 // Reiniciar cuando se acaben los restaurantes
                 setCurrentIndex(0);
             }
@@ -76,6 +76,29 @@ function SwipeRestaurant() {
     };
 
     const currentRestaurant = restaurantsData[currentIndex];
+
+    if (loading) {
+        return (
+            <div className="py-8 flex justify-center items-center min-h-screen">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-gray-600">Cargando restaurantes...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || restaurantsData.length === 0) {
+        return (
+            <div className="py-8 flex justify-center items-center min-h-screen">
+                <div className="text-center">
+                    <p className="text-red-600 mb-4">{error || 'No se pudieron cargar los restaurantes. Asegúrate de configurar tu API Key de Google Places.'}</p>
+                    <p className="text-gray-600 text-sm">1. Asegúrate de haber configurado VITE_GOOGLE_PLACES_API_KEY en .env.local</p>
+                    <p className="text-gray-600 text-sm">2. Verifica que la API key sea válida en Google Cloud Console</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
